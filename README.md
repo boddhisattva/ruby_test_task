@@ -21,3 +21,8 @@ Export the database credentials using environment variable or just edit the data
 
 ## Running the server
 `rails server`
+
+## User Story
+As a dev relations manager of Storyblok
+I want to have an API endpoint from https://github.com/storyblok/storyblok/
+So that I can see open and closed issues from that repository and filter by status
