@@ -32,3 +32,15 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Ignore RVM related file
+.ruby-gemset
+
+# Ignore file for notes
+notes.md
+curious.md
+
+# Ignore credentials
+/config/credentials/development.key
+/config/credentials/test.key
+
