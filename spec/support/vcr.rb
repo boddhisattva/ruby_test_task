@@ -13,6 +13,7 @@ VCR.configure do |config|
 
   # Filter sensitive data
   config.filter_sensitive_data("<GITHUB_TOKEN>") { ENV["GITHUB_TOKEN"] }
+  config.filter_sensitive_data("<GITHUB_TOKEN>") { Rails.application.credentials.github.api_token }
 
   # Default cassette options
   config.default_cassette_options = {
