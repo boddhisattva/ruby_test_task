@@ -37,6 +37,24 @@ gem "bootsnap", require: false
 # Catch unsafe migrations in development
 gem "strong_migrations"
 
+# Sidekiq for background job processing
+gem "sidekiq"
+
+# Redis for caching and job queuing
+gem "redis", "~> 5.0"
+
+# A Ruby toolkit for working with the GitHub API
+gem "octokit", "~> 8.0"
+
+# Faraday retry middleware for improved reliability
+gem "faraday-retry"
+
+# A pagination library for Rails
+gem "pagy"
+
+# A Fast JSON serializer for Ruby
+gem "alba", "~> 3.0"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
@@ -65,4 +83,15 @@ end
 group :test do
   # For generating fake data
   gem "faker"
+
+  # For testing Sidekiq
+  gem "rspec-sidekiq"
+
+  # For testing matchers
+  gem "shoulda-matchers"
+
+  # For testing HTTP requests
+  gem "webmock"
+
+  gem "vcr", "~> 6.3", ">= 6.3.1"
 end

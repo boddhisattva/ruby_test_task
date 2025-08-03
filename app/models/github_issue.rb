@@ -35,4 +35,10 @@ class GithubIssue < ApplicationRecord
   validates :title, presence: true
   validates :issue_created_at, presence: true
   validates :issue_updated_at, presence: true
+
+  scope :by_repository, ->(repo) {
+    owner, repository = repo.split("/")
+    where(owner_name: owner, repository_name: repository)
+  }
+  scope :by_state, ->(state) { where(state:) if state.present? && state != "all" }
 end
