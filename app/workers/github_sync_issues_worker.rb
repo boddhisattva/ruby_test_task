@@ -2,6 +2,7 @@
 
 # Handles both initial sync (fetch all issues) and incremental sync (fetch only updated issues)
 class GithubSyncIssuesWorker
+  GITHUB_PROVIDER = "github"
   include Sidekiq::Worker
 
   sidekiq_options retry: 3, queue: "github_issues"
@@ -9,7 +10,14 @@ class GithubSyncIssuesWorker
   def perform(repository)
     initialize_sync_components(repository)
     log_sync_start
-    sync_with_pagination
+    begin
+      sync_with_pagination
+    rescue => e
+      handle_sync_error(e)
+      raise
+    ensure
+      perform_final_operations
+    end
   end
 
   private
@@ -185,5 +193,41 @@ class GithubSyncIssuesWorker
 
     def log_completion_no_more_issues
       Rails.logger.info "[#{@repository}] Completed - no more issues"
+    end
+
+    def handle_sync_error(error)
+      Rails.logger.error "[#{@repository}] Sync failed: #{error.message}"
+      Rails.logger.error error.backtrace.join("\n")
+    end
+
+    def perform_final_operations
+      update_repository_stats_final
+      invalidate_cache_final
+    rescue => e
+      # Log error but don't re-raise to avoid masking original error
+      Rails.logger.error "[#{@repository}] Error in final operations: #{e.message}"
+    end
+
+    def update_repository_stats_final
+      return unless @repository
+
+      owner, repo = @repository.split("/")
+      repo_stat = RepositoryStat.find_or_create_by(
+        provider: GITHUB_PROVIDER,
+        owner_name: owner,
+        repository_name: repo
+      )
+
+      repo_stat.update_total_count!
+      Rails.logger.info "[#{@repository}] Final repository stats updated: #{repo_stat.total_issues_count} issues"
+    end
+
+    def invalidate_cache_final
+      return unless @repository
+
+      # Single, final cache invalidation matching with pattern set in IssuesFetcher
+      cache_pattern = "issues:#{@repository}:*"
+      Rails.cache.delete_matched(cache_pattern)
+      Rails.logger.info "[#{@repository}] Cache invalidated for pattern: #{cache_pattern}"
     end
 end

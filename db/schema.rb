@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_03_233822) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_04_030152) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -47,6 +47,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_03_233822) do
     t.datetime "updated_at", null: false
     t.index ["github_id"], name: "index_github_users_on_github_id", unique: true
     t.index ["username"], name: "index_github_users_on_username", unique: true
+  end
+
+  create_table "repository_stats", force: :cascade do |t|
+    t.string "provider", null: false, comment: "Provider name (e.g., 'github')"
+    t.string "owner_name", null: false, comment: "The owner of the repository"
+    t.string "repository_name", null: false, comment: "The name of the repository"
+    t.integer "total_issues_count", default: 0, null: false, comment: "Total issues count for a given repository"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "owner_name", "repository_name"], name: "idx_repository_stats_unique", unique: true
   end
 
   add_foreign_key "github_issues", "github_users"
