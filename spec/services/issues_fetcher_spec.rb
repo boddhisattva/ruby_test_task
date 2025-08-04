@@ -350,7 +350,7 @@ expires_in: 1.year).and_return(cached_data)
       end
 
       it "filters by status (closed)" do
-        fetcher = described_class.new("storyblok/storyblok", status: "closed")
+        fetcher = described_class.new("storyblok/storyblok", state: "closed")
         result = fetcher.fetch
 
         # Should only include closed issues
@@ -367,7 +367,7 @@ expires_in: 1.year).and_return(cached_data)
       end
 
       it "filters by status (all)" do
-        fetcher = described_class.new("storyblok/storyblok", status: "all")
+        fetcher = described_class.new("storyblok/storyblok", state: "all")
         result = fetcher.fetch
 
         # Should include both open and closed issues
@@ -400,7 +400,7 @@ expires_in: 1.year).and_return(cached_data)
 
     describe "combined filtering" do
       it "applies both repository and status filters together" do
-        fetcher = described_class.new("storyblok/storyblok", status: "closed")
+        fetcher = described_class.new("storyblok/storyblok", state: "closed")
         result = fetcher.fetch
 
         # Should only include closed issues from storyblok/storyblok
