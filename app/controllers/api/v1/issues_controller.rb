@@ -42,7 +42,7 @@ module Api
         end
 
         def fetch_initial_issues_from_github
-          per_page = params[:per_page].present? ? params[:per_page].to_i : Pagy::DEFAULT[:items]
+          per_page = params[:per_page].present? ? params[:per_page].to_i : Pagy::DEFAULT[:limit]
           page = params[:page]&.to_i || 1
 
           client = GithubSync::GithubClient.new
@@ -123,7 +123,7 @@ module Api
 
         def set_response_headers_with_stats(is_empty_repository = false)
           total = if is_empty_repository
-            Pagy::DEFAULT[:items]  # Use default limit for empty repositories
+            Pagy::DEFAULT[:limit]  # Use default limit for empty repositories
           else
             repository_stat&.total_issues_count
           end

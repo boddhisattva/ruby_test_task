@@ -10,7 +10,7 @@ class IssuesFetcher
     # Support both '' and 'state' parameters for backward compatibility
     @state = params[:state] || "open"
     @page = params[:page] || 1
-    @per_page = params[:per_page].present? ? params[:per_page].to_i : Pagy::DEFAULT[:items]
+    @per_page = params[:per_page].present? ? params[:per_page].to_i : Pagy::DEFAULT[:limit]
     @cv = params[:cv] || calculate_current_cv
   end
 
@@ -29,7 +29,7 @@ class IssuesFetcher
 
     def fetch_from_database
       scope = build_query_scope
-      pagy, issues = pagy(scope, items: per_page, page:)
+      pagy, issues = pagy(scope, limit: per_page, page:)
 
       {
         issues:,
