@@ -7,11 +7,13 @@ module Api
 
       def index
         serialized_github_issues = nil
+        is_empty_repository = false
 
         # For empty repositories, fetch directly from GitHub API
         if repository_has_no_records?
           github_issues = fetch_initial_issues_from_github
           serialized_github_issues = serialize_github_api_issues(github_issues)
+          is_empty_repository = true
         end
 
         ensure_fresh_data if stale_data?
@@ -28,7 +30,7 @@ module Api
         return if request.fresh?(response)
 
         result = fetch_issues_with_cv(cv)
-        set_response_headers_with_stats(result[:total_count])
+        set_response_headers_with_stats(is_empty_repository)
 
         render json: serialized_github_issues || serialize_issues(result[:issues])
       end
@@ -56,7 +58,6 @@ module Api
         end
 
         def serialize_github_api_issues(github_issues)
-          # Transform GitHub API response to match our serializer format
           github_issues.map do |issue|
             {
               number: issue[:number],
@@ -112,7 +113,6 @@ module Api
         end
 
         def ensure_fresh_data
-          # Use new batch processing coordinator for better scalability
           GithubSyncCoordinator.new(repository).queue_sync_jobs
         end
 
@@ -121,16 +121,15 @@ module Api
           last_sync.nil? || last_sync < 10.minutes.ago
         end
 
-        def set_response_headers_with_stats(fallback_count)
-          # For state filtering, we need to use the filtered count, not total stats
-          # Only use repository stats for unfiltered requests
-          total = if params[:state].present? && params[:state] != "all"
-            fallback_count  # Use the actual filtered count
+        def set_response_headers_with_stats(is_empty_repository = false)
+          total = if is_empty_repository
+            Pagy::DEFAULT[:items]  # Use default limit for empty repositories
           else
-            repository_stat&.total_issues_count || fallback_count
+            repository_stat&.total_issues_count
           end
 
           response.headers["X-Total-Count"] = total.to_s
+          # 31536000 seconds corresponds to 1 year
           response.headers["Cache-Control"] = "public, max-age=31536000"
         end
 

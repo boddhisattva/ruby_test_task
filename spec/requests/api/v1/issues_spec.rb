@@ -169,6 +169,15 @@ params: { per_page: per_page_size, page: 2, state: "all" }
           create_list(:github_issue, 3, repository_name: "storyblok", owner_name: "storyblok", state: "open")
           create_list(:github_issue, 2, repository_name: "storyblok", owner_name: "storyblok", state: "closed")
 
+          # Usually RepositoryStat gets updated via a background GithubSyncIssuesWorker job worker
+          # Consider the below as a setup step to create RepositoryStat and update its count
+          repo_stat = RepositoryStat.find_or_create_by(
+            provider:,
+            owner_name: owner,
+            repository_name: repo
+          )
+          repo_stat.update_total_count!
+
           get "/api/v1/repos/#{provider}/#{owner}/#{repo}/issues"
 
           expect(response.headers["X-Total-Count"]).to eq("5")  # Total repository count (3 open + 2 closed)
