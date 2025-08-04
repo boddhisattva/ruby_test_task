@@ -32,6 +32,7 @@ class RepositoryStat < ApplicationRecord
   end
 
   private
+    # Using SQL allows for making sure it is Atomic
     def execute_count_update_sql
       self.class.connection.execute(count_update_sql)
     end
