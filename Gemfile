@@ -93,5 +93,6 @@ group :test do
   # For testing HTTP requests
   gem "webmock"
 
+  # For testing HTTP requests
   gem "vcr", "~> 6.3", ">= 6.3.1"
 end
