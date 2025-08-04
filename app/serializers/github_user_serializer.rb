@@ -21,9 +21,17 @@
 class GithubUserSerializer
   include Alba::Resource
 
-  attributes :username, :avatar_url, :api_url
+  attributes :avatar_url
 
   attribute :type do |user|
     user.account_type
+  end
+
+  attribute :url do |user|
+    user.api_url
+  end
+
+  attribute :login do |user|
+    user.username
   end
 end

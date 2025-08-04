@@ -3,9 +3,15 @@
 class IssueSerializer
   include Alba::Resource
 
-  attributes :issue_number, :state, :title, :body
+  attributes :state, :title, :body
 
-  one :github_user, serializer: GithubUserSerializer
+  attribute :number do |issue|
+    issue.issue_number
+  end
+
+  attribute :user do |issue|
+    GithubUserSerializer.new(issue.github_user).as_json
+  end
 
   attribute :created_at do |issue|
     issue.issue_created_at&.iso8601

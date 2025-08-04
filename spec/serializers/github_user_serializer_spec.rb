@@ -34,17 +34,6 @@ RSpec.describe GithubUserSerializer do
       )
     end
 
-    it "formats timestamps as ISO8601" do
-      github_user = create(:github_user)
-      serialized = JSON.parse(described_class.new(github_user).serialize)
-
-      # Note: The serializer doesn't include timestamps by default
-      # This test verifies that when timestamps are present in the serialized data,
-      # they would be in ISO8601 format (following Rails convention)
-      expect(github_user.created_at.iso8601).to match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/)
-      expect(github_user.updated_at.iso8601).to match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/)
-    end
-
     it "handles nil values gracefully" do
       github_user = build_stubbed(:github_user, avatar_url: nil, api_url: nil)
 
