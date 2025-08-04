@@ -41,6 +41,7 @@ class GithubIssue < ApplicationRecord
   validates :issue_updated_at, presence: true
 
   scope :by_repository, ->(repo) {
+    return none if repo.blank?
     owner, repository = repo.split("/")
     where(owner_name: owner, repository_name: repository)
   }
