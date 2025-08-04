@@ -22,14 +22,19 @@ module GithubSync
         users.map do |user_data|
           {
             github_id: user_data.id,
-            username: user_data.login,
-            avatar_url: user_data.avatar_url,
-            account_type: user_data.type,
-            api_url: user_data.url,
+            username: sanitize_string(user_data.login),
+            avatar_url: sanitize_string(user_data.avatar_url),
+            account_type: sanitize_string(user_data.type),
+            api_url: sanitize_string(user_data.url),
             created_at: Time.current,
             updated_at: Time.current
           }
         end
+      end
+
+      def sanitize_string(value)
+        return value unless value.is_a?(String)
+        value.gsub(/\u0000/, "")
       end
   end
 end
