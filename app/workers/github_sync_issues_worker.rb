@@ -1,93 +1,189 @@
 # frozen_string_literal: true
 
+# Handles both initial sync (fetch all issues) and incremental sync (fetch only updated issues)
 class GithubSyncIssuesWorker
   include Sidekiq::Worker
 
   sidekiq_options retry: 3, queue: "github_issues"
 
-  def perform(repository, sync_type)
-    @repository = repository
-    @sync_type = sync_type
-    @github_client = GithubSync::GithubClient.new
-    @persister = GithubSync::IssuePersister.new(repository)
-
-    Rails.logger.info "[#{repository}] Starting offset-based sync"
-
-    accumulated_issues = []
-    total_issues_count = 0
-    page = 1
-    empty_page_count = 0
-
-    loop do
-      # TODO: Remove log statements later
-      Rails.logger.info "[#{repository}] Fetching page #{page}"
-
-      issues = fetch_page(page)
-
-      case issues
-
-      when nil
-        empty_page_count += 1
-        Rails.logger.info "[#{repository}] Page #{page} returned no issues (empty page count: #{empty_page_count})"
-
-        Rails.logger.info "[#{repository}] Total issues fetched: #{total_issues_count}"
-        break
-
-      else
-        # Got issues successfully
-        empty_page_count = 0  # Reset empty page counter
-
-        accumulated_issues.concat(issues)
-        total_issues_count += issues.size
-
-        Rails.logger.info "[#{repository}] Page #{page}: fetched #{issues.size} issues (total so far: #{total_issues_count})"
-
-        # Persist batch when we reach around 5000 issues
-        if accumulated_issues.size >= GithubSyncCoordinator::BATCH_SIZE
-          Rails.logger.info "[#{repository}] Reached batch size of #{GithubSyncCoordinator::BATCH_SIZE} - persisting batch"
-          @persister.persist(accumulated_issues)
-          accumulated_issues.clear
-          Rails.logger.info "[#{repository}] Batch persisted, continuing with next batch"
-        end
-
-        # Check if there are more issue related pages to paginate through
-        unless @github_client.has_next_page?
-          Rails.logger.info "[#{repository}] No next page link found after page #{page}"
-          Rails.logger.info "[#{repository}] Total issues fetched: #{total_issues_count}"
-          break
-        end
-      end
-
-      page += 1
-    end
-
-    # Persist any remaining issues
-    if accumulated_issues.any?
-      Rails.logger.info "In sync worker: [#{repository}] Persisting final batch of #{accumulated_issues.size} issues"
-      @persister.persist(accumulated_issues)
-    end
-
-    Rails.logger.info "[#{repository}] Completed offset-based sync - Total issues: #{total_issues_count}"
+  def perform(repository)
+    initialize_sync_components(repository)
+    log_sync_start
+    sync_with_pagination
   end
 
   private
-    def fetch_page(page)
-      options = {
-        state: "all",
-        per_page: GithubSync::GithubClient::GITHUB_MAX_RESULTS_PER_PAGE,
-        page:
-      }
+    def initialize_sync_components(repository)
+      @repository = repository
+      @github_client = GithubSync::GithubClient.new
+      @options_builder = GithubSync::SyncOptionsBuilder.new(repository)
+      @persister = GithubSync::IssuePersister.new(repository)
+      @early_termination_checker = GithubSync::EarlyTerminationChecker.new(repository)
+      @timestamp_finder = GithubSync::LastSyncTimestampFinder.new(repository)
+    end
+
+    def log_sync_start
+      sync_type = @timestamp_finder.should_filter_by_time? ? "incremental" : "initial"
+      Rails.logger.info "[#{@repository}] Starting #{sync_type} sync with pagination"
+    end
+
+    def sync_with_pagination
+      sync_state = initialize_sync_state
 
       begin
-        results = @github_client.fetch_issues(@repository, options)
-        reject_pull_requests_type_issues(results)
+        process_initial_pagination_request(sync_state)
+        process_pagination_chain(sync_state) unless sync_state[:terminated_early]
+
+        finalize_sync(sync_state)
+      rescue Faraday::TimeoutError, Net::ReadTimeout => e
+        Rails.logger.error "Network timeout for #{@repository}: #{e.message}"
+        raise
       rescue StandardError => e
-        Rails.logger.error "Failed to fetch page #{page}: #{e.message}"
+        Rails.logger.error "Sync failed for #{@repository}: #{e.message}"
         raise
       end
     end
 
-    def reject_pull_requests_type_issues(results)
-      results.reject(&:pull_request)
+    def initialize_sync_state
+      {
+        accumulated_issues: [],
+        total_issues_count: 0,
+        page_count: 1,
+        found_old_issue: false,
+        terminated_early: false,
+        is_incremental_sync: @timestamp_finder.should_filter_by_time?
+      }
+    end
+
+    def process_initial_pagination_request(sync_state)
+      options = build_initial_pagination_options
+      Rails.logger.info "Starting pagination for #{@repository}"
+
+      issues = fetch_initial_issues(options)
+
+      handle_page_result(issues, sync_state)
+    end
+
+    def build_initial_pagination_options
+      @options_builder.build_options_for_initial_pagination
+    end
+
+    def fetch_initial_issues(options)
+      @github_client.fetch_issues(@repository, options)
+    end
+
+    def handle_page_result(issues, sync_state)
+      case issues
+      when nil, []
+        handle_empty_page(sync_state)
+      else
+        handle_successful_page(issues, sync_state)
+      end
+    end
+
+    def handle_empty_page(sync_state)
+      log_completion_no_more_issues
+      sync_state[:terminated_early] = true
+    end
+
+    def handle_successful_page(issues, sync_state)
+      # Check for early termination in incremental sync
+      if should_check_early_termination?(sync_state) && @early_termination_checker.can_terminate_early?(issues)
+        handle_early_termination(sync_state)
+      else
+        accumulate_issues(issues, sync_state)
+        persist_batch_if_needed(sync_state)
+      end
+    end
+
+    def should_check_early_termination?(sync_state)
+      sync_state[:is_incremental_sync]
+    end
+
+    def handle_early_termination(sync_state)
+      Rails.logger.info "[#{@repository}] All issues are old - terminating early"
+      sync_state[:terminated_early] = true
+      sync_state[:found_old_issue] = true
+    end
+
+    def accumulate_issues(issues, sync_state)
+      sync_state[:accumulated_issues].concat(issues)
+      sync_state[:total_issues_count] += issues.size
+    end
+
+    def persist_batch_if_needed(sync_state)
+      accumulated_issues = sync_state[:accumulated_issues]
+
+      return unless accumulated_issues.size >= GithubSyncCoordinator::BATCH_SIZE
+
+      Rails.logger.info "Persisting batch of #{accumulated_issues.size} issues"
+      @persister.persist(accumulated_issues)
+      accumulated_issues.clear
+    end
+
+    def process_pagination_chain(sync_state)
+      while (next_url = @github_client.extract_next_url)
+        Rails.logger.info "Fetching page #{sync_state[:page_count]} for #{@repository} (#{sync_state[:accumulated_issues].size} issues accumulated)"
+
+        if process_next_page(sync_state, next_url)
+          break # Early termination
+        end
+
+        sync_state[:page_count] += 1
+      end
+    end
+
+    def process_next_page(sync_state, next_url)
+      issues = fetch_next_page(next_url)
+
+      if issues.nil? || issues.empty?
+        handle_empty_page(sync_state)
+        true # Signal to break the loop
+      elsif should_check_early_termination?(sync_state) && @early_termination_checker.can_terminate_early?(issues)
+        handle_pagination_chain_termination(sync_state)
+        true # Signal to break the loop
+      else
+        accumulate_issues(issues, sync_state)
+        persist_batch_if_needed(sync_state)
+        false # Continue processing
+      end
+    end
+
+    def fetch_next_page(next_url)
+      @github_client.fetch_from_url(next_url)
+    end
+
+    def handle_pagination_chain_termination(sync_state)
+      sync_state[:found_old_issue] = true
+      Rails.logger.info "[#{@repository}] Found old issues - terminating pagination"
+    end
+
+    def finalize_sync(sync_state)
+      persist_remaining_issues(sync_state[:accumulated_issues])
+      log_completion_status(sync_state)
+    end
+
+    def persist_remaining_issues(accumulated_issues)
+      return unless accumulated_issues.any?
+
+      Rails.logger.info "Persisting final batch of #{accumulated_issues.size} issues"
+      @persister.persist(accumulated_issues)
+    end
+
+    def log_completion_status(sync_state)
+      status = determine_completion_status(sync_state)
+      Rails.logger.info "[#{@repository}] Sync completed #{status} - Total: #{sync_state[:total_issues_count]} issues"
+    end
+
+    def determine_completion_status(sync_state)
+      if sync_state[:terminated_early] || sync_state[:found_old_issue]
+        "with early termination"
+      else
+        "fully"
+      end
+    end
+
+    def log_completion_no_more_issues
+      Rails.logger.info "[#{@repository}] Completed - no more issues"
     end
 end

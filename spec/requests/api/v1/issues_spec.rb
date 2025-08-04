@@ -142,6 +142,107 @@ params: { per_page: per_page_size, page: 2, state: "all" }
           end
         end
       end
+
+      it "performs initial sync followed by incremental sync", :vcr, :sidekiq_inline do
+        # Use boddhisattva/ruby_test_task as test repository
+        test_provider = "github"
+        test_owner = "boddhisattva"
+        test_repo = "ruby_test_task"
+        test_repository = "#{test_owner}/#{test_repo}"
+
+        VCR.use_cassette("github_incremental_sync_with_changes") do
+          # Clear any existing data for this repository
+          # GithubIssue.where(repository_name: test_repo, owner_name: test_owner).destroy_all
+          # GithubUser.destroy_all
+
+
+          # === STEP 1: Initial Sync (no existing data) ===
+          # This should trigger a full sync since no data exists
+          get "/api/v1/repos/#{test_provider}/#{test_owner}/#{test_repo}/issues", params: { state: "all" }
+
+          expect(response).to have_http_status(:ok)
+
+          # Verify issues were synced from the repository
+          initial_issues = GithubIssue.where(repository_name: test_repo, owner_name: test_owner)
+          initial_count = initial_issues.count
+          expect(initial_count).to be > 0
+
+          # Verify users were created
+          initial_users_count = GithubUser.count
+          expect(initial_users_count).to be > 0
+
+
+
+          # Verify the API response matches what we synced
+          json = JSON.parse(response.body)
+          expect(json.size).to be > 0
+          expect(response.headers["X-Total-Count"]).to eq(initial_count.to_s)
+
+          # Capture initial state of issue #7 (should be open)
+          initial_issue_7 = initial_issues.find_by(issue_number: 7)
+          expect(initial_issue_7).to be_present
+          expect(initial_issue_7.state).to eq("open")
+
+          # === STEP 2: Wait and prepare for incremental sync ===
+          # Advance time to simulate passage of time and make data "stale"
+          # Use a longer time gap to ensure incremental sync is triggered
+          travel_to(1.hour.from_now) do
+            # Clear cache to force fresh data check
+
+
+            # === STEP 3: Incremental Sync (with existing data) ===
+            # This should trigger incremental sync since data exists but is stale
+            # The VCR cassette will mock GitHub API to return:
+            # 1. A new issue (#9) with a new user (newuser)
+            # 2. An updated existing issue (#7) that changed from open to closed
+
+            get "/api/v1/repos/#{test_provider}/#{test_owner}/#{test_repo}/issues", params: { state: "all" }
+
+            expect(response).to have_http_status(:ok)
+
+            # Verify incremental sync occurred
+            post_incremental_issues = GithubIssue.where(repository_name: test_repo, owner_name: test_owner)
+            post_incremental_count = post_incremental_issues.count
+
+            # Should have the original issues plus the new issue from GitHub API
+            # The VCR cassette returns specific issues, so we expect them to be present
+            expect(post_incremental_count).to be >= initial_count
+
+            # Verify the new issue from our VCR cassette was synced
+            new_issue = post_incremental_issues.find_by(issue_number: 9)
+            expect(new_issue).to be_present
+            expect(new_issue.title).to eq("New issue created during incremental sync test")
+            expect(new_issue.state).to eq("open")
+
+            # Verify the new user was created
+            new_user = GithubUser.find_by(username: "newuser")
+            expect(new_user).to be_present
+            expect(new_user.github_id).to eq(99999)
+
+            # Verify the updated existing issue was synced
+            updated_issue = post_incremental_issues.find_by(issue_number: 7)
+            expect(updated_issue).to be_present
+            expect(updated_issue.state).to eq("closed") # Changed from open to closed
+            expect(updated_issue.issue_updated_at).to be > initial_issue_7.issue_updated_at
+
+            # Verify API response reflects updated count
+            json = JSON.parse(response.body)
+            expect(json.size).to be > 0
+            expect(response.headers["X-Total-Count"]).to eq(post_incremental_count.to_s)
+
+            # Verify the API response reflects the updated data
+            # The response might contain different issues due to pagination
+            expect(json.size).to be > 0
+            expect(response.headers["X-Total-Count"]).to eq(post_incremental_count.to_s)
+
+            # === STEP 4: Verify the sync actually happened ===
+            # The sync should have processed the mocked GitHub API response
+            # and updated our database with new/updated issues
+            expect(response).to have_http_status(:ok)
+            expect(response.headers["X-Total-Count"]).to eq(post_incremental_count.to_s)
+          end
+        end
+      end
     end
   end
 end

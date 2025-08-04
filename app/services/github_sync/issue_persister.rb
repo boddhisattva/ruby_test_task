@@ -9,30 +9,51 @@ module GithubSync
     def persist(api_returned_issues)
       return false if api_returned_issues.empty?
 
-      existing_issues_data = fetch_existing_issue_data(api_returned_issues)
-      new_or_updated_issues_to_be_persisted = select_new_or_updated_issues(api_returned_issues, existing_issues_data)
-
+      new_or_updated_issues_to_be_persisted = find_changed_issues(api_returned_issues)
       return false if new_or_updated_issues_to_be_persisted.empty?
 
-      ActiveRecord::Base.transaction do
+      persist_changed_issues(new_or_updated_issues_to_be_persisted)
+
+      true
+    end
+
+    private
+      def find_changed_issues(api_returned_issues)
+        existing_issues_data = fetch_existing_issue_data(api_returned_issues)
+        select_new_or_updated_issues(api_returned_issues, existing_issues_data)
+      end
+
+      def persist_changed_issues(issues)
+        ActiveRecord::Base.transaction do
+          issue_records = prepare_issue_records(issues)
+          persist_in_batches(issue_records)
+        end
+      end
+
+      def prepare_issue_records(issues)
+        user_id_map = process_users_for_issues(issues)
+        build_issue_records(issues, user_id_map)
+      end
+
+      def process_users_for_issues(issues)
         user_processor = UserProcessor.new
-        user_id_map = user_processor.process_users(new_or_updated_issues_to_be_persisted)
+        user_processor.process_users(issues)
+      end
 
+      def build_issue_records(issues, user_id_map)
         issue_builder = IssueBuilder.new(@repository, user_id_map)
-        issue_records = issue_builder.build_records(new_or_updated_issues_to_be_persisted)
+        issue_builder.build_records(issues)
+      end
 
+      def persist_in_batches(issue_records)
         issue_records.each_slice(GithubSyncCoordinator::BATCH_SIZE) do |batch|
           Rails.logger.debug "Persisting batch of #{batch.size} issues"
           GithubIssue.upsert_all(batch, unique_by: [:owner_name, :repository_name, :issue_number])
         end
       end
 
-      true
-    end
-
-    private
-      def fetch_existing_issue_data(api_returned_issues)
-        issue_numbers = api_returned_issues.map(&:number)
+      def fetch_existing_issue_data(issues)
+        issue_numbers = issues.map(&:number)
         owner_name, repository_name = @repository.split("/")
 
         GithubIssue.where(
