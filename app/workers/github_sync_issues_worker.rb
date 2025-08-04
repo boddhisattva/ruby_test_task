@@ -9,7 +9,7 @@ class GithubSyncIssuesWorker
 
   def perform(repository)
     initialize_sync_components(repository)
-    log_sync_start
+    start_sync
     begin
       sync_with_pagination
     rescue => e
@@ -30,9 +30,8 @@ class GithubSyncIssuesWorker
       @timestamp_finder = GithubSync::LastSyncTimestampFinder.new(repository)
     end
 
-    def log_sync_start
+    def start_sync
       sync_type = @timestamp_finder.should_filter_by_time? ? "incremental" : "initial"
-      Rails.logger.info "[#{@repository}] Starting #{sync_type} sync with pagination"
     end
 
     def sync_with_pagination
@@ -65,8 +64,6 @@ class GithubSyncIssuesWorker
 
     def process_initial_pagination_request(sync_state)
       options = build_initial_pagination_options
-      Rails.logger.info "Starting pagination for #{@repository}"
-
       issues = fetch_initial_issues(options)
 
       handle_page_result(issues, sync_state)
@@ -90,7 +87,6 @@ class GithubSyncIssuesWorker
     end
 
     def handle_empty_page(sync_state)
-      log_completion_no_more_issues
       sync_state[:terminated_early] = true
     end
 
@@ -109,7 +105,6 @@ class GithubSyncIssuesWorker
     end
 
     def handle_early_termination(sync_state)
-      Rails.logger.info "[#{@repository}] All issues are old - terminating early"
       sync_state[:terminated_early] = true
       sync_state[:found_old_issue] = true
     end
@@ -124,15 +119,12 @@ class GithubSyncIssuesWorker
 
       return unless accumulated_issues.size >= GithubSyncCoordinator::BATCH_SIZE
 
-      Rails.logger.info "Persisting batch of #{accumulated_issues.size} issues"
       @persister.persist(accumulated_issues)
       accumulated_issues.clear
     end
 
     def process_pagination_chain(sync_state)
       while (next_url = @github_client.extract_next_url)
-        Rails.logger.info "Fetching page #{sync_state[:page_count]} for #{@repository} (#{sync_state[:accumulated_issues].size} issues accumulated)"
-
         if process_next_page(sync_state, next_url)
           break # Early termination
         end
@@ -163,24 +155,17 @@ class GithubSyncIssuesWorker
 
     def handle_pagination_chain_termination(sync_state)
       sync_state[:found_old_issue] = true
-      Rails.logger.info "[#{@repository}] Found old issues - terminating pagination"
     end
 
     def finalize_sync(sync_state)
       persist_remaining_issues(sync_state[:accumulated_issues])
-      log_completion_status(sync_state)
+      determine_completion_status(sync_state)
     end
 
     def persist_remaining_issues(accumulated_issues)
       return unless accumulated_issues.any?
 
-      Rails.logger.info "Persisting final batch of #{accumulated_issues.size} issues"
       @persister.persist(accumulated_issues)
-    end
-
-    def log_completion_status(sync_state)
-      status = determine_completion_status(sync_state)
-      Rails.logger.info "[#{@repository}] Sync completed #{status} - Total: #{sync_state[:total_issues_count]} issues"
     end
 
     def determine_completion_status(sync_state)
@@ -189,10 +174,6 @@ class GithubSyncIssuesWorker
       else
         "fully"
       end
-    end
-
-    def log_completion_no_more_issues
-      Rails.logger.info "[#{@repository}] Completed - no more issues"
     end
 
     def handle_sync_error(error)
@@ -219,7 +200,6 @@ class GithubSyncIssuesWorker
       )
 
       repo_stat.update_total_count!
-      Rails.logger.info "[#{@repository}] Final repository stats updated: #{repo_stat.total_issues_count} issues"
     end
 
     def invalidate_cache_final
@@ -228,6 +208,5 @@ class GithubSyncIssuesWorker
       # Single, final cache invalidation matching with pattern set in IssuesFetcher
       cache_pattern = "issues:#{@repository}:*"
       Rails.cache.delete_matched(cache_pattern)
-      Rails.logger.info "[#{@repository}] Cache invalidated for pattern: #{cache_pattern}"
     end
 end

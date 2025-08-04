@@ -17,8 +17,6 @@ RSpec.describe GithubSyncIssuesWorker, type: :worker do
     allow(GithubSync::IssuePersister).to receive(:new).with(repository).and_return(persister)
     allow(GithubSync::EarlyTerminationChecker).to receive(:new).with(repository).and_return(early_termination_checker)
     allow(GithubSync::LastSyncTimestampFinder).to receive(:new).with(repository).and_return(timestamp_finder)
-    allow(Rails.logger).to receive(:info)
-    allow(Rails.logger).to receive(:error)
     allow(Rails.cache).to receive(:delete_matched)
   end
 
@@ -43,12 +41,6 @@ RSpec.describe GithubSyncIssuesWorker, type: :worker do
         worker.perform(repository)
       end
 
-      it "logs the sync progress" do
-        expect(Rails.logger).to receive(:info).with("[#{repository}] Starting initial sync with pagination")
-        expect(Rails.logger).to receive(:info).with("[#{repository}] Sync completed fully - Total: 50 issues")
-        
-        worker.perform(repository)
-      end
 
       it "updates repository stats" do
         owner, repo = repository.split("/")
@@ -99,13 +91,6 @@ RSpec.describe GithubSyncIssuesWorker, type: :worker do
           worker.perform(repository)
         end
 
-        it "logs early termination" do
-          expect(Rails.logger).to receive(:info).with("[#{repository}] Starting incremental sync with pagination")
-          expect(Rails.logger).to receive(:info).with("[#{repository}] Found old issues - terminating pagination")
-          expect(Rails.logger).to receive(:info).with("[#{repository}] Sync completed with early termination - Total: 5 issues")
-          
-          worker.perform(repository)
-        end
       end
 
       context "without early termination" do
@@ -159,12 +144,6 @@ RSpec.describe GithubSyncIssuesWorker, type: :worker do
         worker.perform(repository)
       end
 
-      it "logs completion with no issues" do
-        expect(Rails.logger).to receive(:info).with("[#{repository}] Completed - no more issues")
-        expect(Rails.logger).to receive(:info).with("[#{repository}] Sync completed with early termination - Total: 0 issues")
-        
-        worker.perform(repository)
-      end
     end
 
     context "when handling errors" do
@@ -181,9 +160,7 @@ RSpec.describe GithubSyncIssuesWorker, type: :worker do
           allow(github_client).to receive(:fetch_issues).and_raise(Faraday::TimeoutError.new("timeout"))
         end
 
-        it "logs error and re-raises" do
-          expect(Rails.logger).to receive(:error).with("Network timeout for #{repository}: timeout")
-          
+        it "re-raises timeout error" do
           expect { worker.perform(repository) }.to raise_error(Faraday::TimeoutError)
         end
 
@@ -208,10 +185,7 @@ RSpec.describe GithubSyncIssuesWorker, type: :worker do
           allow(github_client).to receive(:fetch_issues).and_raise(StandardError.new(error_message))
         end
 
-        it "logs error with backtrace and re-raises" do
-          expect(Rails.logger).to receive(:error).with("[#{repository}] Sync failed: #{error_message}")
-          expect(Rails.logger).to receive(:error).with(anything) # backtrace
-          
+        it "re-raises general error" do
           expect { worker.perform(repository) }.to raise_error(StandardError)
         end
       end
@@ -226,9 +200,7 @@ RSpec.describe GithubSyncIssuesWorker, type: :worker do
           allow(RepositoryStat).to receive(:find_or_create_by).and_raise(StandardError.new("DB error"))
         end
 
-        it "logs error but doesn't re-raise to avoid masking original error" do
-          expect(Rails.logger).to receive(:error).with("[#{repository}] Error in final operations: DB error")
-          
+        it "doesn't re-raise error from final operations to avoid masking original error" do
           expect { worker.perform(repository) }.not_to raise_error
         end
       end
