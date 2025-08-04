@@ -55,3 +55,6 @@ So that I can see open and closed issues from that repository and filter by stat
 2. `curl "http://localhost:3000/api/v1/repos/github/boddhisattva/ruby_test_task/issues?state=open"`
 3. `curl "http://localhost:3000/api/v1/repos/github/boddhisattva/ruby_test_task/issues?page=2&per_page=3&state=open"`
 4.  `curl "http://localhost:3000/api/v1/repos/github/boddhisattva/ruby_test_task/issues?page=3&per_page=3&state=all"`
+
+## Please note: Security related app updates
+- Given Rails version of app is 7.1.3.4, currently I've updated the app based on Dependabot alerts & the related gems on Github to handle various levels of severity and handle various security vulnerabilities.
