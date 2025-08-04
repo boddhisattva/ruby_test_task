@@ -17,6 +17,10 @@
 #
 # Indexes
 #
+#  idx_github_issues_owner_name_repository_name               (owner_name,repository_name)
+#  idx_github_issues_repo_issue_created_at                    (owner_name,repository_name,issue_created_at)
+#  idx_github_issues_repo_issue_updated_at                    (owner_name,repository_name,issue_updated_at)
+#  idx_github_issues_repo_updated_at                          (owner_name,repository_name,updated_at)
 #  idx_on_owner_name_repository_name_issue_number_cc5010a1fc  (owner_name,repository_name,issue_number) UNIQUE
 #  idx_on_owner_name_repository_name_state_a94b2775c7         (owner_name,repository_name,state)
 #  index_github_issues_on_github_user_id                      (github_user_id)

@@ -1,0 +1,165 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://api.github.com/repos/boddhisattva/ruby_test_task/issues?per_page=100&state=all
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Octokit Ruby Gem 8.1.0
+      Accept:
+      - application/vnd.github.v3+json
+      Content-Type:
+      - application/json
+      Authorization:
+      - token <GITHUB_TOKEN>
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Sun, 03 Aug 2025 21:25:00 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Cache-Control:
+      - private, max-age=60, s-maxage=60
+      Vary:
+      - Accept, Authorization, Cookie, X-GitHub-OTP,Accept-Encoding, Accept, X-Requested-With
+      Etag:
+      - W/"initial_etag_for_sync_test"
+      X-Oauth-Scopes:
+      - project, repo, write:discussion
+      X-Accepted-Oauth-Scopes:
+      - repo
+      Github-Authentication-Token-Expiration:
+      - 2025-08-25 08:04:46 UTC
+      X-Github-Media-Type:
+      - github.v3; format=json
+      X-Github-Api-Version-Selected:
+      - '2022-11-28'
+      X-Ratelimit-Limit:
+      - '5000'
+      X-Ratelimit-Remaining:
+      - '4998'
+      X-Ratelimit-Reset:
+      - '1754259371'
+      X-Ratelimit-Used:
+      - '2'
+      X-Ratelimit-Resource:
+      - core
+      Access-Control-Expose-Headers:
+      - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes,
+        X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO,
+        X-GitHub-Request-Id, Deprecation, Sunset
+      Access-Control-Allow-Origin:
+      - "*"
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubdomains; preload
+      X-Frame-Options:
+      - deny
+      X-Content-Type-Options:
+      - nosniff
+      X-Xss-Protection:
+      - '0'
+      Referrer-Policy:
+      - origin-when-cross-origin, strict-origin-when-cross-origin
+      Content-Security-Policy:
+      - default-src 'none'
+      Transfer-Encoding:
+      - chunked
+      Server:
+      - github.com
+      X-Github-Request-Id:
+      - D74A:2D75CA:19FB2E:1789D9:688FD19A
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7","repository_url":"https://api.github.com/repos/boddhisattva/ruby_test_task","labels_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/labels{/name}","comments_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/comments","events_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/events","html_url":"https://github.com/boddhisattva/ruby_test_task/issues/7","id":3286897817,"node_id":"I_kwDOPVI8ys7D6hSZ","number":7,"title":"testing unified pagination logic that completely uses link headers for pagination in a3","user":{"login":"boddhisattva","id":655963,"node_id":"MDQ6VXNlcjY1NTk2Mw==","avatar_url":"https://avatars.githubusercontent.com/u/655963?v=4","gravatar_id":"","url":"https://api.github.com/users/boddhisattva","html_url":"https://github.com/boddhisattva","followers_url":"https://api.github.com/users/boddhisattva/followers","following_url":"https://api.github.com/users/boddhisattva/following{/other_user}","gists_url":"https://api.github.com/users/boddhisattva/gists{/gist_id}","starred_url":"https://api.github.com/users/boddhisattva/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/boddhisattva/subscriptions","organizations_url":"https://api.github.com/users/boddhisattva/orgs","repos_url":"https://api.github.com/users/boddhisattva/repos","events_url":"https://api.github.com/users/boddhisattva/events{/privacy}","received_events_url":"https://api.github.com/users/boddhisattva/received_events","type":"User","user_view_type":"public","site_admin":false},"labels":[],"state":"open","locked":false,"assignee":null,"assignees":[],"milestone":null,"comments":0,"created_at":"2025-08-03T08:22:17Z","updated_at":"2025-08-03T08:22:17Z","closed_at":null,"author_association":"OWNER","active_lock_reason":null,"sub_issues_summary":{"total":0,"completed":0,"percent_completed":0},"body":null,"closed_by":null,"reactions":{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/reactions","total_count":0,"+1":0,"-1":0,"laugh":0,"hooray":0,"confused":0,"heart":0,"rocket":0,"eyes":0},"timeline_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/timeline","performed_via_github_app":null,"state_reason":null},{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/5","repository_url":"https://api.github.com/repos/boddhisattva/ruby_test_task","labels_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/5/labels{/name}","comments_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/5/comments","events_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/5/events","html_url":"https://github.com/boddhisattva/ruby_test_task/issues/5","id":3286641968,"node_id":"I_kwDOPVI8ys7D5i0w","number":5,"title":"test issue 4 to test incremental sync with new issue added","user":{"login":"boddhisattva","id":655963,"node_id":"MDQ6VXNlcjY1NTk2Mw==","avatar_url":"https://avatars.githubusercontent.com/u/655963?v=4","gravatar_id":"","url":"https://api.github.com/users/boddhisattva","html_url":"https://github.com/boddhisattva","followers_url":"https://api.github.com/users/boddhisattva/followers","following_url":"https://api.github.com/users/boddhisattva/following{/other_user}","gists_url":"https://api.github.com/users/boddhisattva/gists{/gist_id}","starred_url":"https://api.github.com/users/boddhisattva/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/boddhisattva/subscriptions","organizations_url":"https://api.github.com/users/boddhisattva/orgs","repos_url":"https://api.github.com/users/boddhisattva/repos","events_url":"https://api.github.com/users/boddhisattva/events{/privacy}","received_events_url":"https://api.github.com/users/boddhisattva/received_events","type":"User","user_view_type":"public","site_admin":false},"labels":[],"state":"open","locked":false,"assignee":null,"assignees":[],"milestone":null,"comments":0,"created_at":"2025-08-03T03:58:11Z","updated_at":"2025-08-03T03:58:11Z","closed_at":null,"author_association":"OWNER","active_lock_reason":null,"sub_issues_summary":{"total":0,"completed":0,"percent_completed":0},"body":null,"closed_by":null,"reactions":{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/5/reactions","total_count":0,"+1":0,"-1":0,"laugh":0,"hooray":0,"confused":0,"heart":0,"rocket":0,"eyes":0},"timeline_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/5/timeline","performed_via_github_app":null,"state_reason":null}]'
+  recorded_at: Sun, 03 Aug 2025 21:25:00 GMT
+- request:
+    method: get
+    uri: https://api.github.com/repos/boddhisattva/ruby_test_task/issues?direction=desc&per_page=100&since=2025-08-03T08:21:17Z&sort=updated&state=all
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Octokit Ruby Gem 8.1.0
+      Accept:
+      - application/vnd.github.v3+json
+      Content-Type:
+      - application/json
+      Authorization:
+      - token <GITHUB_TOKEN>
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Sun, 03 Aug 2025 21:25:00 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Cache-Control:
+      - private, max-age=60, s-maxage=60
+      Vary:
+      - Accept, Authorization, Cookie, X-GitHub-OTP,Accept-Encoding, Accept, X-Requested-With
+      Etag:
+      - W/"updated_etag_for_incremental_sync_test"
+      X-Oauth-Scopes:
+      - project, repo, write:discussion
+      X-Accepted-Oauth-Scopes:
+      - repo
+      Github-Authentication-Token-Expiration:
+      - 2025-08-25 08:04:46 UTC
+      X-Github-Media-Type:
+      - github.v3; format=json
+      X-Github-Api-Version-Selected:
+      - '2022-11-28'
+      X-Ratelimit-Limit:
+      - '5000'
+      X-Ratelimit-Remaining:
+      - '4998'
+      X-Ratelimit-Reset:
+      - '1754259371'
+      X-Ratelimit-Used:
+      - '2'
+      X-Ratelimit-Resource:
+      - core
+      Access-Control-Expose-Headers:
+      - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining,
+        X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes,
+        X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO,
+        X-GitHub-Request-Id, Deprecation, Sunset
+      Access-Control-Allow-Origin:
+      - "*"
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubdomains; preload
+      X-Frame-Options:
+      - deny
+      X-Content-Type-Options:
+      - nosniff
+      X-Xss-Protection:
+      - '0'
+      Referrer-Policy:
+      - origin-when-cross-origin, strict-origin-when-cross-origin
+      Content-Security-Policy:
+      - default-src 'none'
+      Transfer-Encoding:
+      - chunked
+      Server:
+      - github.com
+      X-Github-Request-Id:
+      - D74A:2D75CA:19FB2E:1789D9:688FD19A
+    body:
+      encoding: ASCII-8BIT
+      string: '[{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/9","repository_url":"https://api.github.com/repos/boddhisattva/ruby_test_task","labels_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/9/labels{/name}","comments_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/9/comments","events_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/9/events","html_url":"https://github.com/boddhisattva/ruby_test_task/issues/9","id":3287476910,"node_id":"I_kwDOPVI8ys6h5tZk","number":9,"title":"New issue created during incremental sync test","user":{"login":"newuser","id":99999,"node_id":"MDQ6VXNlcjk5OTk5","avatar_url":"https://avatars.githubusercontent.com/u/99999?v=4","gravatar_id":"","url":"https://api.github.com/users/newuser","html_url":"https://github.com/newuser","followers_url":"https://api.github.com/users/newuser/followers","following_url":"https://api.github.com/users/newuser/following{/other_user}","gists_url":"https://api.github.com/users/newuser/gists{/gist_id}","starred_url":"https://api.github.com/users/newuser/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/newuser/subscriptions","organizations_url":"https://api.github.com/users/newuser/orgs","repos_url":"https://api.github.com/users/newuser/repos","events_url":"https://api.github.com/users/newuser/events{/privacy}","received_events_url":"https://api.github.com/users/newuser/received_events","type":"User","user_view_type":"public","site_admin":false},"labels":[],"state":"open","locked":false,"assignee":null,"assignees":[],"milestone":null,"comments":0,"created_at":"2025-08-03T21:20:00Z","updated_at":"2025-08-03T21:20:00Z","closed_at":null,"author_association":"NONE","active_lock_reason":null,"sub_issues_summary":{"total":0,"completed":0,"percent_completed":0},"body":"This is a new issue created during the incremental sync test to simulate GitHub having new data since the last sync.","closed_by":null,"reactions":{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/9/reactions","total_count":0,"+1":0,"-1":0,"laugh":0,"hooray":0,"confused":0,"heart":0,"rocket":0,"eyes":0},"timeline_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/9/timeline","performed_via_github_app":null,"state_reason":null},{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7","repository_url":"https://api.github.com/repos/boddhisattva/ruby_test_task","labels_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/labels{/name}","comments_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/comments","events_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/events","html_url":"https://github.com/boddhisattva/ruby_test_task/issues/7","id":3286897817,"node_id":"I_kwDOPVI8ys7D6hSZ","number":7,"title":"testing unified pagination logic that completely uses link headers for pagination in a3","user":{"login":"boddhisattva","id":655963,"node_id":"MDQ6VXNlcjY1NTk2Mw==","avatar_url":"https://avatars.githubusercontent.com/u/655963?v=4","gravatar_id":"","url":"https://api.github.com/users/boddhisattva","html_url":"https://github.com/boddhisattva","followers_url":"https://api.github.com/users/boddhisattva/followers","following_url":"https://api.github.com/users/boddhisattva/following{/other_user}","gists_url":"https://api.github.com/users/boddhisattva/gists{/gist_id}","starred_url":"https://api.github.com/users/boddhisattva/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/boddhisattva/subscriptions","organizations_url":"https://api.github.com/users/boddhisattva/orgs","repos_url":"https://api.github.com/users/boddhisattva/repos","events_url":"https://api.github.com/users/boddhisattva/events{/privacy}","received_events_url":"https://api.github.com/users/boddhisattva/received_events","type":"User","user_view_type":"public","site_admin":false},"labels":[],"state":"closed","locked":false,"assignee":null,"assignees":[],"milestone":null,"comments":0,"created_at":"2025-08-03T08:22:17Z","updated_at":"2025-08-03T21:20:00Z","closed_at":"2025-08-03T21:20:00Z","author_association":"OWNER","active_lock_reason":null,"sub_issues_summary":{"total":0,"completed":0,"percent_completed":0},"body":null,"closed_by":{"login":"boddhisattva","id":655963,"node_id":"MDQ6VXNlcjY1NTk2Mw==","avatar_url":"https://avatars.githubusercontent.com/u/655963?v=4","gravatar_id":"","url":"https://api.github.com/users/boddhisattva","html_url":"https://github.com/boddhisattva","followers_url":"https://api.github.com/users/boddhisattva/followers","following_url":"https://api.github.com/users/boddhisattva/following{/other_user}","gists_url":"https://api.github.com/users/boddhisattva/gists{/gist_id}","starred_url":"https://api.github.com/users/boddhisattva/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/boddhisattva/subscriptions","organizations_url":"https://api.github.com/users/boddhisattva/orgs","repos_url":"https://api.github.com/users/boddhisattva/repos","events_url":"https://api.github.com/users/boddhisattva/events{/privacy}","received_events_url":"https://api.github.com/users/boddhisattva/received_events","type":"User","user_view_type":"public","site_admin":false},"reactions":{"url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/reactions","total_count":0,"+1":0,"-1":0,"laugh":0,"hooray":0,"confused":0,"heart":0,"rocket":0,"eyes":0},"timeline_url":"https://api.github.com/repos/boddhisattva/ruby_test_task/issues/7/timeline","performed_via_github_app":null,"state_reason":"completed"}]'
+  recorded_at: Sun, 03 Aug 2025 21:25:00 GMT
+recorded_with: VCR 6.3.1

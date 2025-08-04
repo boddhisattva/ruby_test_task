@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_07_30_115228) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_03_233822) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -27,8 +27,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_07_30_115228) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["github_user_id"], name: "index_github_issues_on_github_user_id"
+    t.index ["owner_name", "repository_name", "issue_created_at"], name: "idx_github_issues_repo_issue_created_at", comment: "Used in places like default ordering for issue display"
     t.index ["owner_name", "repository_name", "issue_number"], name: "idx_on_owner_name_repository_name_issue_number_cc5010a1fc", unique: true
+    t.index ["owner_name", "repository_name", "issue_updated_at"], name: "idx_github_issues_repo_issue_updated_at", comment: "CRITICAL: Optimizes cache version calculation for issue_updated_at - affects every API request performance"
     t.index ["owner_name", "repository_name", "state"], name: "idx_on_owner_name_repository_name_state_a94b2775c7"
+    t.index ["owner_name", "repository_name", "updated_at"], name: "idx_github_issues_repo_updated_at", comment: "Stale data detection for sync coordination"
+    t.index ["owner_name", "repository_name"], name: "idx_github_issues_owner_name_repository_name", comment: "Optimizes repository-based queries(e.g., by_repository scope) & sync operations"
     t.check_constraint "issue_number > 0", name: "github_issues_issue_number_positive"
     t.check_constraint "state::text = ANY (ARRAY['open'::character varying, 'closed'::character varying]::text[])", name: "github_issues_state_valid"
   end
