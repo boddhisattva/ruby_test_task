@@ -9,7 +9,6 @@ Octokit.configure do |c|
     request: {
       open_timeout: 30,    # Time to establish connection (30 seconds)
       read_timeout: 300,   # Time to read response data (5 minutes)
-      write_timeout: 60    # Time to write request data (1 minute)
     }
   }
 end
