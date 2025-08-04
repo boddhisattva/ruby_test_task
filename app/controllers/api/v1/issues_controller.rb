@@ -109,7 +109,7 @@ module Api
         end
 
         def filter_params
-          params.permit(:state, :page, :per_page, :owner, :repo).to_h.symbolize_keys
+          params.permit(:state, :page, :per_page, :owner, :repo, :provider).to_h.symbolize_keys
         end
 
         def ensure_fresh_data
