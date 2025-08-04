@@ -576,7 +576,7 @@ url: "https://api.github.com/users/user2"),
             expect(first_issue["user"]["type"]).to be_a(String)
 
             # Verify headers reflect default page size for empty repositories
-            expect(response.headers["X-Total-Count"]).to eq(Pagy::DEFAULT[:items].to_s)
+            expect(response.headers["X-Total-Count"]).to eq(Pagy::DEFAULT[:limit].to_s)
           end
         end
 
