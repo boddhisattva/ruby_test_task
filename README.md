@@ -8,19 +8,92 @@ You will need:
 ## Install the dependencies using
 `bundle install`
 
-## Create the databases on your database server
 
-backend_test_development
+## Tools to setup to get the app up and running
 
-backend_test_test
 
-Export the database credentials using environment variable or just edit the database.yml
+* Postgres
+  - Setup For Mac OS Users:
+    - One can use the related instructions [here](https://postgresapp.com/)
+* Redis
+  - For Mac OS Users:
+    - Assuming you have homebrew already installed one can use `brew install redis` to setup Redis
+
+
+## Create the database with the appropriate database schema
+
+* Run from the project root directory: `rake db:create` and `rake db:migrate`
+
+## Please add your Github personal token using Rails Credentials as per the below format
+
+- **Add/Edit Github API token**: Please replace 'enviroment' in the below command with the actual environment among 'production', 'development', 'test' enviroment to setup/update Rails credentials in the respective enviroment accordingly.
+
+`EDITOR="code --wait" bin/rails credentials:edit --environment 'enviroment'`
+
+- How these credentials are accessed in the Rails app: `Rails.application.credentials.github.api_token`(used in: `GithubSync::GithubClient` related class)
+
+- How to specify your credentials in the appropriate 'filename-enviroment.yml'
+
+Please replace 'Please Insert Your Github API Token here' with your actual Github API token.
+
+```
+github:
+  api_token: 'Please Insert Your Github API Token here'
+
+```
+
+
+
+## Running the Rails app server and other required tools
+- **Postgres**: Make sure you have Postgres DB Server is Running(with [Postgres.app](https://postgresapp.com/) it is configured to automatically run on your local machine once the system boots/starts)
+- **Redis**: Run Redis in background with: `brew services start redis`(You can check if Redis is running with: `brew services info redis`)
+- **Start Rails app server**: Run application server with: `rails server`
+- **Run Sidekiq in Background**: In a separate terminal run the required Sidekiq Background job processor with: `bundle exec sidekiq -q github_issues`
+
+
+## In order to Sync the Storyblok Github Issues & Persist them to local DB in order to filter by Open & Closed issues, one can use the following command once the app is up and running
+
+- `curl "http://localhost:3000/api/v1/repos/github/storyblok/storyblok/issues"``
+
+  - Please note the above command assumes your Rails app server is running on port 3000
+
+## High level overview of how the App related Issues API works for Syncing & Filtering
+
+
+### Default API filtering Behavior
+
+### Get Issues API Defaults
+
+- The default sorting state when no explicit `state` filter is specified in the API call is sort the issues by `open` issue state
+- The Issues API fetches the issues sorted by `issue_created_at` which corresponds to the timestamp of when the issue was created at on the Github platform
+- The sorting order is sort by Issues `DESC`
+
+### Initial Sync Behavior
+- In the Initial sync to the Issues API using the above link, an API call is made to Github to return the top 25 open issues(uses configured set `Pagy` default limit) in the API response and in the background a job is triggerred to save all the open & closed issues to the DB
+  - **Pease note:** In the case of Storyblok, `curl "http://localhost:3000/api/v1/repos/github/storyblok/storyblok/issues"` returns an empty array because we don't have any existing open issues currently on the Storyblok repo
+
+
+### Incremental Sync Behavior
+- In subsequent Issues API calls to an already initially synced repo, an Incremental Sync is triggered in the background that retrieves all newly created issues & updated Github issues using the Github List Issue API's `since` timestamp for more efficient processing and while this `upsert` happens in the background for newly created and recently updated Github repo issues based on the databases most recent record related Github `issue_updated_at` timestamp corresponding to that Github repo, it simultaneously also fetches existing issues from the DB as part of the API response based on the filter options specified as part of the original API call made
+
+### Different API calls that trigger the Initial/Incremental Sync
+
+#### When No specific filter state is specified
+- curl "http://localhost:3000/api/v1/repos/github/boddhisattva/ruby_test_task/issues?"
+
+#### When an explicit filter by `open` state is specified
+- curl "http://localhost:3000/api/v1/repos/github/boddhisattva/ruby_test_task/issues?state=open"
+
+#### When an explicit filter by `closed` state is specified
+- curl "http://localhost:3000/api/v1/repos/github/boddhisattva/ruby_test_task/issues?state=closed"
+
 
 ## Running the test suite
-`bundle exec rspec`
 
-## Running the server
-`rails server`
+* Please make sure you have the Github API token setup as per the above section
+for the `test` environment before running the tests with the below command
+
+`bundle exec rspec`
 
 ## User Story
 As a dev relations manager of Storyblok
@@ -42,7 +115,6 @@ So that I can see open and closed issues from that repository and filter by stat
 - Have Implemented Eager loading and designed in the classes in a way to adhere to SOLID principles
 - Use Sidekiq Jobs as well for Background Processing for better performance
 - Added some Timeout options & configurations as well to Octokit(in their initializer) to add some guardrails for Network Timeouts
-
 
 ## Areas of Improvement
 - Store the 5k accumulated users in Memcached instead of in memory as that is more performant and avoids using in memory store
